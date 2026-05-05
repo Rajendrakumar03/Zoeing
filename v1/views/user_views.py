@@ -40,7 +40,7 @@ class RegisterView(APIView):
                     user.save()
                     # tokens = get_tokens_for_user(user)
                     return Response(
-                    {'message': 'Guest upgraded to registered user.','user': UserSerializer(user).data,'tokens': tokens,},status=status.HTTP_200_OK,)
+                    {'message': 'Guest upgraded to registered user.','user': UserSerializer(user).data},status=status.HTTP_200_OK,)
                 else:
                     return Response({'message': 'User already registered.'},status=status.HTTP_400_BAD_REQUEST,)
                 
