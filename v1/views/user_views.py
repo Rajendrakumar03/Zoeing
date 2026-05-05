@@ -10,42 +10,70 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from v1.serializers.user_serializer import RegisterSerializer, LoginSerializer, UserSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+# from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 User = get_user_model()
 
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
+# def get_tokens_for_user(user):
+#     refresh = RefreshToken.for_user(user)
+#     return {
+#         'refresh': str(refresh),
+#         'access': str(refresh.access_token),
+#     }
     
 
 
 class RegisterView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
-        # import pdb;pdb.set_trace()
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            user = serializer.save()
-            tokens = get_tokens_for_user(user)
-            return Response(
-                {
-                    'message': 'Account created successfully.',
-                    'user': UserSerializer(user).data,
-                    'tokens': tokens,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        if data['user_role'] == 'REGISTERED':
+            
+            email = data.get('email')
+            try:
+                user = User.objects.get(email=email)
+                
+                if user.user_role == 'GUEST':
+                    user.user_role = 'REGISTERED'
+                    user.set_password(data.get('password'))
+                    user.save()
+                    # tokens = get_tokens_for_user(user)
+                    return Response(
+                    {'message': 'Guest upgraded to registered user.','user': UserSerializer(user).data,'tokens': tokens,},status=status.HTTP_200_OK,)
+                else:
+                    return Response({'message': 'User already registered.'},status=status.HTTP_400_BAD_REQUEST,)
+                
+            except User.DoesNotExist:
+                serializer = RegisterSerializer(data=data)
+                if serializer.is_valid(raise_exception=True):
+                    user = serializer.save()
+                    # tokens = get_tokens_for_user(user)
+                    return Response(
+                        {
+                            'message': 'Account created successfully.',
+                            'user': UserSerializer(user).data,
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        elif data['user_role'] == 'GUEST':
+            
+            if data['password'] and data['confirm_password']:
+                data.pop("password")
+                data.pop("confirm_password")
+            
+            users = User.objects.create(**data)
+            
+            if users:
+            
+                return Response("Guest user updated",status=status.HTTP_200_OK)
+        
+            return Response("Guest user not updated",status=status.HTTP_400_BAD_REQUEST)
     
     
 class LoginView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -70,19 +98,17 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        tokens = get_tokens_for_user(user)
+        # tokens = get_tokens_for_user(user)
         return Response(
             {
                 'message': 'Login successful.',
                 'user': UserSerializer(user).data,
-                'tokens': tokens,
             },
             status=status.HTTP_200_OK,
         )
         
         
 class LogoutView(APIView):
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         try:
@@ -100,7 +126,6 @@ class LogoutView(APIView):
         
         
 class MeView(APIView):
-    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
@@ -114,22 +139,22 @@ class MeView(APIView):
     
     
     
-class CustomTokenObtainPairView(TokenObtainPairView):
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
+# class CustomTokenObtainPairView(TokenObtainPairView):
+#     def post(self, request, *args, **kwargs):
+#         data = request.data
+#         serializer = self.get_serializer(data=data)
+#         serializer.is_valid(raise_exception=True)
 
-        application_name = request.query_params.get("application", None)
+#         application_name = request.query_params.get("application", None)
 
-        user = User.objects.get(email=data["email"])
+#         user = User.objects.get(email=data["email"])
 
-        if user :
-            token_response = serializer.validated_data
+#         if user :
+#             token_response = serializer.validated_data
 
-            response = Response(token_response, status=status.HTTP_200_OK)
+#             response = Response(token_response, status=status.HTTP_200_OK)
 
-            return response
+#             return response
 
 
-        return Response({'error': "Invalid"},status=status.HTTP_401_UNAUTHORIZED)
+#         return Response({'error': "Invalid"},status=status.HTTP_401_UNAUTHORIZED)

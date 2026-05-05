@@ -9,6 +9,6 @@ material_urlpatterns = [
     path('materials',MaterialView.as_view({'get':'get'}),name='materials'),
     path('brand_materials',MaterialView.as_view({'get':'brand_list'}),name='brand_materials'),
     path('enquiry',EnquiryView.as_view({'post':'post'}),name='enquiry'),
-    
-    
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('all_materials',MaterialView.as_view({'get':'get_all_materials'}),name='all_materials'),
+       
+] 

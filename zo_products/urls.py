@@ -18,13 +18,13 @@ from django.contrib import admin
 from django.urls import path,include
 from v1.urls.user_urls import user_urlpatterns
 from v1.urls.material_urls import material_urlpatterns
+from django.conf.urls.static import static
+from django.conf import settings
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('v1/', include(user_urlpatterns)),
     path('v1/', include(material_urlpatterns)),
-    
-    
-    
-    
-] 
+        
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

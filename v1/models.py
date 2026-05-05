@@ -31,9 +31,23 @@ class UserManager(BaseUserManager):
         
         
 class User(AbstractUser):
+    
+    ADMIN = "ADMIN"
+    GUEST = "GUEST"
+    REGISTERED = "REGISTERED"
+    
+    ROLE_CHOICES = (
+        (ADMIN,ADMIN),
+        (GUEST,GUEST),
+        (REGISTERED,REGISTERED),      
+    )
+    
+    
     username = None
     email = models.EmailField(('email address'), unique=True)
     company_name = models.CharField(max_length=100, null=True, blank=True)
+    user_role = models.CharField(max_length=20,choices=ROLE_CHOICES,default=None,null=True)
+    
     
     objects = UserManager()
     
@@ -99,6 +113,11 @@ class Materials(TimeStampMixin):
     category = models.ForeignKey(Category,on_delete=models.CASCADE,related_name='materials')
     brand = models.ForeignKey(Brand,on_delete=models.CASCADE,blank=True,null=True,related_name='materials')
     sub_category = models.ForeignKey(SubCategory,on_delete=models.CASCADE,related_name='materials')
+    attachment_1 = models.FileField(upload_to='materials/pdfs/', blank=True, null=True)
+    attachment_2 = models.FileField(upload_to='materials/pdfs/', blank=True, null=True)
+    attachment_3 = models.FileField(upload_to='materials/pdfs/', blank=True, null=True)
+    attachment_4 = models.FileField(upload_to='materials/pdfs/', blank=True, null=True)
+        
     class Meta:
         verbose_name = "materials"
         db_table = "materials"

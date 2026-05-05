@@ -288,52 +288,6 @@ class FileUploadMixin:
         ]
         return custom_urls + urls
 
-    # def upload_file(self, request):
-    #     if request.method == 'POST':
-    #         file = request.FILES.get('upload_file')
-
-    #         if not file:
-    #             messages.error(request, 'Please select a file.')
-    #             return redirect('../')
-
-    #         ext = file.name.split('.')[-1].lower()
-    #         if ext not in ['xlsx', 'csv']:
-    #             messages.error(request, 'Only .xlsx and .csv files are allowed.')
-    #             return redirect('../')
-
-    #         try:
-    #             if ext == 'xlsx':
-    #                 df = pd.read_excel(io.BytesIO(file.read()))
-    #             else:
-    #                 df = pd.read_csv(io.BytesIO(file.read()))
-
-    #             df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-
-    #             required_columns = {'category', 'sub_product', 'material_name'}
-    #             missing = required_columns - set(df.columns)
-    #             if missing:
-    #                 messages.error(request, f'Missing required columns: {", ".join(missing)}')
-    #                 return redirect('../')
-
-    #             df = df.dropna(subset=['category', 'sub_product', 'material_name'])
-
-    #             if df.empty:
-    #                 messages.error(request, 'No valid rows found in file.')
-    #                 return redirect('../')
-
-    #             counts = self.process_file(df)
-    #             messages.success(
-    #                 request,
-    #                 f"Import successful — "
-    #                 f"{counts['categories']} categories, "
-    #                 f"{counts['sub_products']} sub-products, "
-    #                 f"{counts['materials']} materials created."
-    #             )
-
-    #         except Exception as e:
-    #             messages.error(request, f'Error processing file: {str(e)}')
-
-    #     return redirect('../')
     def upload_file(self, request):
         if request.method == 'POST':
             file = request.FILES.get('upload_file')
@@ -433,9 +387,43 @@ class FileUploadMixin:
             print("=== NOT A POST REQUEST, method:", request.method)
 
         return redirect('../')
+    
+    def clean_description(self, text):
+        if not text:
+            return None
+        
+        # normalize line endings (Excel uses \r\n sometimes)
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
+        
+        # split into lines
+        lines = text.split('\n')
+        
+        while lines and lines[-1].strip() == '':
+            lines.pop()
+        
+        # remove empty lines at start and end
+        # lines = [line for line in lines]
+        
+        # join paragraphs with double newline for spacing
+        paragraphs = [line for line in lines if line.strip() != '']
+        # current = []
+        
+        # for line in lines:
+        #     if line.strip() == '':
+        #         if current:
+        #             paragraphs.append('\n'.join(current))
+        #             current = []
+        #     else:
+        #         current.append(line)
+        
+        # if current:
+        #     paragraphs.append('\n'.join(current))
+        
+        # join paragraphs with double newline = blank line between them
+        return '\n\n'.join(paragraphs)
 
     def process_file(self, df):
-        # import pdb;pdb.set_trace()
+        
         counts = {'category': 0, 'sub_category': 0, 'materials': 0,'skipped_rows':0}
 
         for _, row in df.iterrows():
@@ -471,9 +459,12 @@ class FileUploadMixin:
                 if Materials.objects.filter(product_code=product_code).exists():
                     counts['skipped'] += 1
                     continue
+                
+                raw_description  = str(row['description']) if pd.notna(row.get('description')) else None
+                description = self.clean_description(raw_description)
 
                 name         = str(row['material_name']).strip() if pd.notna(row.get('material_name')) else None
-                description  = str(row['description']).strip() if pd.notna(row.get('description')) else None
+                # description  = str(row['description']) if pd.notna(row.get('description')) else None
                 product_code = str(row['product_code']).strip() if pd.notna(row.get('product_code')) else None
                 count        = int(row['count']) if pd.notna(row.get('count')) else 0
                 price        = float(row['price']) if pd.notna(row.get('price')) else None
@@ -570,7 +561,7 @@ class FileUploadMixin:
 # ── User ──────────────────────────────────────────────────────────────────────
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email']
+    list_display = ['email','company_name','user_role']
     list_per_page = 20
     search_fields = ['email']
 
@@ -632,7 +623,7 @@ class BrandAdmin(admin.ModelAdmin):
 # ── Materials ─────────────────────────────────────────────────────────────────
 @admin.register(Materials)
 class MaterialsAdmin(FileUploadMixin, admin.ModelAdmin):
-    list_display = ['name', 'count', 'price', 'product_code', 'brand', 'category', 'sub_category']
+    list_display = ['name', 'count', 'price', 'product_code', 'brand', 'category', 'sub_category','attachment_1','attachment_2','attachment_3','attachment_4']
     list_per_page = 20
     search_fields = ['name']
 
