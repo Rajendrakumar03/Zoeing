@@ -13,7 +13,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Materials
-        fields = ['id', 'name', 'description', 'count', 'price', 
+        fields = ['id', 'name', 'description', 'count', 'price', 'zo_material_code',
                   'product_code', 'image', 'industry','attachment_1','attachment_2','attachment_3','attachment_4']
         
 class SubCategorySerializer(serializers.ModelSerializer):

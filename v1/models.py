@@ -106,6 +106,8 @@ class Materials(TimeStampMixin):
     name = models.CharField(max_length=255,blank=True,null=True)
     description = models.TextField(blank=True,null=True)
     count = models.IntegerField(blank=True,null=True)
+    opening_stock = models.IntegerField(default=0)
+    zo_material_code = models.CharField(max_length=150,blank=True,null=True)
     price = models.DecimalField(blank=True,null=True,max_digits=10,decimal_places=2)
     product_code = models.CharField(max_length=255,blank=True,null=True,unique=True)
     image = models.ImageField(upload_to='materials/',blank=True,null=True)
@@ -140,4 +142,36 @@ class Enquiry(TimeStampMixin):
     
     def __str__(self):
         return self.email
+    
+    
+
+class InvoiceUpload(TimeStampMixin):
+    
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    invoice_number = models.CharField(max_length=100, blank=True, null=True)
+    customer_name  = models.CharField(max_length=255, blank=True, null=True)
+    invoice = models.FileField(upload_to='materials/invoice/pdfs/', blank=True, null=True) 
+    invoice_date   = models.DateField(blank=True, null=True)  
+    class Meta:
+        db_table = 'invoice'
+        verbose_name = 'invoice_upload'
+        verbose_name_plural = 'invoice_uploads'
+    
+    
+class SoldStock(TimeStampMixin):
+    material       = models.ForeignKey(Materials, on_delete=models.CASCADE, related_name='sold_stocks')
+    invoice        = models.ForeignKey(InvoiceUpload, on_delete=models.CASCADE, related_name='sold_stocks') 
+    quantity_sold  = models.IntegerField(blank=True,null=True)
+    unit_price     = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_price    = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    notes          = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'sold_stock'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.material.name} - Sold {self.quantity_sold} - {self.invoice.invoice_number}"
+    
+    
     

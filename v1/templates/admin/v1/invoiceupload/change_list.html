@@ -1,0 +1,31 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    {{ block.super }}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="
+                padding: 12px 16px;
+                margin: 10px 0;
+                border-radius: 4px;
+                font-weight: 600;
+                font-size: 14px;
+                background: {% if message.tags == 'error' %}#fdecea{% else %}#e6f4ea{% endif %};
+                border-left: 4px solid {% if message.tags == 'error' %}#d32f2f{% else %}#2e7d32{% endif %};
+                color: {% if message.tags == 'error' %}#b71c1c{% else %}#1b5e20{% endif %};
+            ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if sold_invoice_html %}
+        {{ sold_invoice_html }}
+    {% endif %}
+
+    {% if upload_form_html %}
+        {{ upload_form_html }}
+    {% endif %}
+
+{% endblock %}

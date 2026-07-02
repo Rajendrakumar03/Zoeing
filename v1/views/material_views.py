@@ -85,6 +85,7 @@ class MaterialView(viewsets.ViewSet):
                 'description' :material.description,
                 'count': material.count,
                 'price': material.price,
+                'zo_material_code':material.zo_material_code,
                 'product_code': material.product_code,
                 'image': request.build_absolute_uri(material.image.url) if material.image else None,
                 'industry': material.industry,
